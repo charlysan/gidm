@@ -1,9 +1,9 @@
 # Guy In The Middle (gidm)
-Simple man-in-the-middle tool
+Simple http proxy man-in-the-middle tool
 
 ## Intro
 
-`gidm` is a minimalist "man-in-the-middle" tool that can be used as a forward proxy capable of injecting custom headers and logging requests
+`gidm` is a minimalist http proxy that can be used as a "man-in-the-middle" tool capable of injecting custom headers and logging requests.
 
 ## Requirements
 
@@ -24,7 +24,7 @@ You can run the tool with `--help` option to get a list of supported commands:
 ```bash
 $ gidm --help
 NAME:
-   gidm - Simple midm tool
+   gidm - Simple http proxy midm tool
 
 USAGE:
    gidm [global options] command [command options] [arguments...]
