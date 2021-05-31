@@ -114,7 +114,20 @@ For example, to replace every `ok` with `BAD` in your response body, you can use
 
 ## Interactive Mode
 
-Interactive Mode allows to modify the proxy behavior without restarting the app. Te proxy will listen to the port specified using `-i <PORT>` flag, and expose the following endpoints:
+Interactive Mode allows to modify the proxy behavior without restarting the app. Te proxy will listen to the port specified using `-i <PORT>` flag:
+
+```bash
+./gidm \
+-p 8081 \
+-u http://localhost:9000 \
+-reqh "x-custom-flag: true" \
+-reqh "x-custom-id: 12345" \
+-resb "ok/BAD" \
+-i 9090 \
+-d
+```
+
+And it will expose the following endpoints:
 
 ```
 PUT /requestHeaders
