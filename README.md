@@ -1,4 +1,4 @@
-# Guy In The Middle (gidm)
+# gidm
 Simple man-in-the-middle tool
 
 ## Intro
@@ -22,7 +22,7 @@ go install
 You can run the tool with `--help` option to get a list of supported commands:
 
 ```bash
-$ gidm --help
+$ ./gidm --help
 NAME:
    gidm - Simple midm tool
 
@@ -33,14 +33,20 @@ COMMANDS:
    help, h  Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
-   -H value    inject header to request
-   -P value    listen on port (default: "8080")
-   -U value    redirect to url (default: "http://localhost:9000")
-   -d          enable debugging (default: false)
-   --help, -h  show help (default: false)
+   --reqh value  inject request header
+   --resh value  inject response header
+   --reqb value  replace string in request body (slash notation: old/new)
+   --resb value  replace string in response body (slash notation: old/new)
+   -p value      listen to port (default: "8080")
+   -u value      redirect to url (default: "http://localhost:9000")
+   -i value      enable interactive mode (API server will listen on specified port) (default: "9090")
+   -d            enable debugging (default: false)
+   --help, -h    show help (default: false)
 ```
 
 ## Examples
+
+### Inject Request Headers
 
 Listen on port `8081` and forward to `http://localhost:9000`; show debug information and inject the following headers:
 - `x-custom-flag: true`
@@ -49,10 +55,10 @@ Listen on port `8081` and forward to `http://localhost:9000`; show debug informa
 
 ```bash
 gidm \
--P 8081 \
--U http://localhost:9000 \
--H "x-custom-flag: true" \
--H "x-custom-id: 12345" \
+-p 8081 \
+-u http://localhost:9000 \
+-reqh "x-custom-flag: true" \
+-reqh "x-custom-id: 12345" \
 -d
 ```
 
@@ -68,53 +74,66 @@ You should get this output:
 ```
 Listening on port: 8081
 Redirecting to: http://localhost:9000
-Headers to be injected:
+
+Request headers to be injected:
   x-custom-flag: true
   x-custom-id: 12345
-
-2021/05/25 21:31:20 POST HTTP/1.1 localhost:8081/dummy
+2021/05/31 18:34:16 POST /dummy HTTP/1.1
+Host: localhost:9000
+Accept: */*
+Content-Length: 20
+Content-Type: application/json
+User-Agent: curl/7.64.1
+X-Custom-Flag: true
+X-Custom-Id: 12345
 
 {"name": "john doe"}
+2021/05/31 18:34:16 HTTP/1.1 404 Not Found
+Content-Length: 22
+Content-Type: application/json
+Date: Mon, 31 May 2021 21:34:16 GMT
+Server: uvicorn
 
-Content-Length: [20]
-User-Agent: [curl/7.64.1]
-Accept: [*/*]
-Content-Type: [application/json]
+{"detail":"Not Found"}
 ```
 
-If you want to check that the headers are being injected, you could run two `gidm` instances and chain them together:
+### Replace body strings
 
-```
-gidm \
--P 8081 \
--U http://localhost:8082 \
--H "x-custom-flag: true" \
--H "x-custom-id: 12345" \
+You can add string replacers for request and response body. 
+For example, to replace every `ok` with `BAD` in your response body, you can use this command:
+
+```bash
+./gidm \
+-p 8081 \
+-u http://localhost:9000 \
+-reqh "x-custom-flag: true" \
+-reqh "x-custom-id: 12345" \
+-resb "ok/BAD" \
 -d
 ```
 
+## Interactive Mode
+
+Interactive Mode allows to modify the proxy behavior without restarting the app. Te proxy will listen to the port specified using `-i <PORT>` flag, and expose the following endpoints:
+
 ```
-gidm \
--P 8082 \
--U http://localhost:9000 \
--d
+PUT /requestHeaders
+PUT /responseHeaders
+PUT /requestBodyReplacers
+PUT /responseBodyReplacers
 ```
 
-And in the second instance you should see something like this:
+So, supposing you want to change the response body string replacers you can hit the proxy with this payload:
+
 ```
-Listening on port: 8082
-Redirecting to: http://localhost:9000
-
-2021/05/25 21:38:29 POST HTTP/1.1 localhost:8082/dummy
-
-{"name": "john doe"}
-
-Content-Length: [20]
-Accept: [*/*]
-Content-Type: [application/json]
-X-Forwarded-For: [::1]
-Accept-Encoding: [gzip]
-User-Agent: [curl/7.64.1]
-X-Custom-Id: [12345]
-X-Custom-Flag: [true]
+curl -X PUT \
+http://localhost:9090/responseBodyReplacers \
+-d '{"ok": "WRONG!!"}'
 ```
+
+And the proxy should show the following log:
+```
+Response Body string replacers updated
+  ok -> WRONG!!
+```
+

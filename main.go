@@ -12,6 +12,9 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/charlysan/gidm/api"
+
+	"github.com/gorilla/mux"
 	"github.com/urfave/cli/v2"
 )
 
@@ -20,6 +23,7 @@ var resHeadersSlice *cli.StringSlice
 var reqBodyStrSlice *cli.StringSlice
 var resBodyStrSlice *cli.StringSlice
 var port string
+var portInteractive string
 var baseURL string
 var debug bool = false
 
@@ -60,16 +64,22 @@ func main() {
 				Destination: resBodyStrSlice,
 			},
 			&cli.StringFlag{
-				Name:        "P",
+				Name:        "p",
 				Usage:       "listen to port",
 				Value:       "8080",
 				Destination: &port,
 			},
 			&cli.StringFlag{
-				Name:        "U",
+				Name:        "u",
 				Usage:       "redirect to url",
 				Value:       "http://localhost:9000",
 				Destination: &baseURL,
+			},
+			&cli.StringFlag{
+				Name:        "i",
+				Usage:       "enable interactive mode (API server will listen on specified port)",
+				Value:       "9090",
+				Destination: &portInteractive,
 			},
 			&cli.BoolFlag{
 				Name:        "d",
@@ -157,6 +167,11 @@ func (t *myTransport) RoundTrip(request *http.Request) (*http.Response, error) {
 		resp.Header.Set(key, value)
 	}
 
+	if debug {
+		resDump, _ := httputil.DumpResponse(resp, true)
+		log.Println(string(resDump))
+	}
+
 	return resp, nil
 }
 
@@ -207,6 +222,24 @@ func run(c *cli.Context) error {
 		}
 	}
 
+	if len(portInteractive) > 0 {
+		handler := api.CustomHandler{
+			Router:     mux.NewRouter(),
+			ReqHeaders: &reqHeaders,
+			ResHeaders: &resHeaders,
+			ReqBodyStr: &reqBodyStr,
+			ResBodyStr: &resBodyStr,
+		}
+
+		handler.Router.HandleFunc("/requestHeaders", handler.HandleRequestHeaders).Methods("PUT")
+		handler.Router.HandleFunc("/responseHeaders", handler.HandleResponseHeaders).Methods("PUT")
+		handler.Router.HandleFunc("/requestBodyReplacers", handler.HandleRequestBodyStr).Methods("PUT")
+		handler.Router.HandleFunc("/responseBodyReplacers", handler.HandleResponseBodyStr).Methods("PUT")
+
+		go func() {
+			log.Fatal(http.ListenAndServe(":"+portInteractive, handler.Router))
+		}()
+	}
 	http.HandleFunc("/", handleRequestAndRedirect)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 
@@ -227,13 +260,13 @@ func parseStringReplacers(srcStrSlice *cli.StringSlice) map[string]string {
 }
 
 func parseStringHeader(srcStrSlice *cli.StringSlice) map[string]string {
-	resHeaders = make(map[string]string, len(resHeadersSlice.Value()))
-	for _, h := range resHeadersSlice.Value() {
+	strHeader := make(map[string]string, len(srcStrSlice.Value()))
+	for _, h := range srcStrSlice.Value() {
 		header := strings.Split(strings.ReplaceAll(h, " ", ""), ":")
 		if len(header) == 2 {
-			resHeaders[header[0]] = header[1]
+			strHeader[header[0]] = header[1]
 		}
 	}
 
-	return resHeaders
+	return strHeader
 }
