@@ -35,11 +35,11 @@ COMMANDS:
 GLOBAL OPTIONS:
    --reqh value  inject request header
    --resh value  inject response header
-   --reqb value  replace string in request body (slash notation: old/new)
-   --resb value  replace string in response body (slash notation: old/new)
+   --reqb value  replace string in request body (/old/new/)
+   --resb value  replace string in response body (/old/new/)
    -p value      listen to port (default: "8080")
    -u value      redirect to url (default: "http://localhost:9000")
-   -i value      enable interactive mode (API server will listen on specified port) (default: "9090")
+   -i value      enable interactive mode (API server will listen on specified port)
    -d            enable debugging (default: false)
    --help, -h    show help (default: false)
 ```
