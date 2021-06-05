@@ -24,7 +24,7 @@ You can run the tool with `--help` option to get a list of supported commands:
 ```bash
 $ ./gidm --help
 NAME:
-   gidm - Simple midm tool
+   gidm - Simple http proxy midm tool
 
 USAGE:
    gidm [global options] command [command options] [arguments...]
