@@ -122,7 +122,7 @@ Interactive Mode allows to modify the proxy behavior without restarting the app.
 -u http://localhost:9000 \
 -reqh "x-custom-flag: true" \
 -reqh "x-custom-id: 12345" \
--resb "ok/BAD" \
+-resb "/ok/BAD/" \
 -i 9090 \
 -d
 ```
