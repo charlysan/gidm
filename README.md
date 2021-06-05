@@ -1,9 +1,9 @@
 # gidm
-Simple man-in-the-middle tool
+Simple http proxy man-in-the-middle tool
 
 ## Intro
 
-`gidm` is a minimalist "man-in-the-middle" tool that can be used as a forward proxy capable of injecting custom headers and logging requests
+`gidm` is a minimalist http proxy that can be used as "man-in-the-middle" tool capable of manipulating requests and responses.
 
 ## Requirements
 
@@ -108,13 +108,13 @@ For example, to replace every `ok` with `BAD` in your response body, you can use
 -u http://localhost:9000 \
 -reqh "x-custom-flag: true" \
 -reqh "x-custom-id: 12345" \
--resb "ok/BAD" \
+-resb "/ok/BAD/" \
 -d
 ```
 
 ## Interactive Mode
 
-Interactive Mode allows to modify the proxy behavior without restarting the app. Te proxy will listen to the port specified using `-i <PORT>` flag:
+Interactive Mode allows to modify the proxy behavior without restarting the app. Te proxy will listen on the port specified using `-i <PORT>` flag:
 
 ```bash
 ./gidm \
@@ -149,4 +149,3 @@ And the proxy should show the following log:
 Response Body string replacers updated
   ok -> WRONG!!
 ```
-

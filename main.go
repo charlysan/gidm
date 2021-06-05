@@ -9,6 +9,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -23,7 +24,7 @@ var resHeadersSlice *cli.StringSlice
 var reqBodyStrSlice *cli.StringSlice
 var resBodyStrSlice *cli.StringSlice
 var port string
-var portInteractive string
+var portInteractive string = ""
 var baseURL string
 var debug bool = false
 
@@ -55,12 +56,12 @@ func main() {
 			},
 			&cli.StringSliceFlag{
 				Name:        "reqb",
-				Usage:       "replace string in request body (slash notation: old/new)",
+				Usage:       "replace string in request body (/old/new/)",
 				Destination: reqBodyStrSlice,
 			},
 			&cli.StringSliceFlag{
 				Name:        "resb",
-				Usage:       "replace string in response body (slash notation: old/new)",
+				Usage:       "replace string in response body (/old/new/)",
 				Destination: resBodyStrSlice,
 			},
 			&cli.StringFlag{
@@ -78,7 +79,7 @@ func main() {
 			&cli.StringFlag{
 				Name:        "i",
 				Usage:       "enable interactive mode (API server will listen on specified port)",
-				Value:       "9090",
+				Required:    true,
 				Destination: &portInteractive,
 			},
 			&cli.BoolFlag{
@@ -207,22 +208,27 @@ func run(c *cli.Context) error {
 	// Parse request Body Strings
 	if len(reqBodyStrSlice.Value()) > 0 {
 		reqBodyStr = parseStringReplacers(reqBodyStrSlice)
-		fmt.Println("\nRequest body strings to be replaced:")
-		for old, new := range reqBodyStr {
-			fmt.Println(" ", old+" -> "+new)
+		if len(reqBodyStr) > 0 {
+			fmt.Println("\nRequest body strings to be replaced:")
+			for old, new := range reqBodyStr {
+				fmt.Println(" ", old+" -> "+new)
+			}
 		}
+
 	}
 
 	// Parse response Body Strings
 	if len(resBodyStrSlice.Value()) > 0 {
 		resBodyStr = parseStringReplacers(resBodyStrSlice)
-		fmt.Println("\nResponse body strings to be replaced:")
-		for old, new := range resBodyStr {
-			fmt.Println(" ", old+" -> "+new)
+		if len(resBodyStr) > 0 {
+			fmt.Println("\nResponse body strings to be replaced:")
+			for old, new := range resBodyStr {
+				fmt.Println(" ", old+" -> "+new)
+			}
 		}
 	}
-
 	if len(portInteractive) > 0 {
+		fmt.Println("\nInteractive mode enabled: listening on port", portInteractive)
 		handler := api.CustomHandler{
 			Router:     mux.NewRouter(),
 			ReqHeaders: &reqHeaders,
@@ -246,19 +252,6 @@ func run(c *cli.Context) error {
 	return nil
 }
 
-func parseStringReplacers(srcStrSlice *cli.StringSlice) map[string]string {
-	resBodyStr = make(map[string]string, len(srcStrSlice.Value()))
-	for _, repStr := range srcStrSlice.Value() {
-		// TODO: support "/" parsing
-		srcTgt := strings.Split(repStr, "/")
-		if len(srcTgt) == 2 {
-			resBodyStr[srcTgt[0]] = srcTgt[1]
-		}
-	}
-
-	return resBodyStr
-}
-
 func parseStringHeader(srcStrSlice *cli.StringSlice) map[string]string {
 	strHeader := make(map[string]string, len(srcStrSlice.Value()))
 	for _, h := range srcStrSlice.Value() {
@@ -269,4 +262,21 @@ func parseStringHeader(srcStrSlice *cli.StringSlice) map[string]string {
 	}
 
 	return strHeader
+}
+
+func parseStringReplacers(srcStrSlice *cli.StringSlice) map[string]string {
+	resBodyStr = make(map[string]string, len(srcStrSlice.Value()))
+	for _, repStr := range srcStrSlice.Value() {
+		// match strings between slashes, and allow escaped slash `\/`
+		re := regexp.MustCompile(`^\/((?:[^\/]|(?:\\)(?:\/))+)\/((?:[^\/]|(?:\\)(?:\/))+)\/$`)
+		matches := re.FindStringSubmatch(repStr)
+		if len(matches) != 3 {
+			continue
+		}
+		old := strings.ReplaceAll(matches[1], `\/`, `/`)
+		new := strings.ReplaceAll(matches[2], `\/`, `/`)
+		resBodyStr[old] = new
+	}
+
+	return resBodyStr
 }
