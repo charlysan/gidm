@@ -2,4 +2,4 @@ dockers:
   - goos: linux
   - goarch: arm64
   - image_templates:
-    - charlysan/gidm
+    - "charlysan/gidm:{{ .Tag }}"
