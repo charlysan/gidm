@@ -1,7 +1,5 @@
-builds:
-  - env:
-    - CGO_ENABLED=1
 dockers:
   - goos: linux
+  - goarch: arm64
   - image_templates:
     - charlysan/gidm

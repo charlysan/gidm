@@ -1,3 +1,3 @@
-FROM scratch
+FROM alpine
 ENTRYPOINT ["/gidm"]
 COPY gidm /
