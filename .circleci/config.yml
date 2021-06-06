@@ -18,4 +18,5 @@ jobs:
       - checkout
       - setup_remote_docker:
           version: 19.03.13
+      - run: echo "$DOCKER_TOKEN" | docker login --username $DOCKER_USERNAME --password-stdin
       - run: curl -sL https://git.io/goreleaser | bash
