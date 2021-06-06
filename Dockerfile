@@ -1,3 +1,3 @@
 FROM scratch
-ENTRYPOINT ["/mybin"]
-COPY mybin /
+ENTRYPOINT ["/gidm"]
+COPY gidm /
