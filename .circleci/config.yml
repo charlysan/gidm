@@ -23,4 +23,5 @@ jobs:
       - run: curl -sL https://git.io/goreleaser | bash
       # Generate Docker Image
       - run: docker build -t charlysan/gidm:$CIRCLE_TAG .
-      - run: docker push charlysan/gidm:$CIRCLE_TAG
+      - run: docker tag charlysan/gidm:$CIRCLE_TAG charlysan/gidm:latest
+      - run: docker push charlysan/gidm
