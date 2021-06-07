@@ -5,21 +5,34 @@ Simple http proxy man-in-the-middle tool
 
 `gidm` is a minimalist http proxy that can be used as "man-in-the-middle" tool capable of manipulating requests and responses.
 
-## Requirements
-
-`GO v1.15` or greater 
-
 ## Installation
 
-Just clone this repo and build & install as usual:
+### Build from source
+
+[GO v1.15](https://golang.org/doc/go1.15) or greater is required. Just clone this repo and build as usual:
+
+```
+go build
+```
+
+Or build & install:
 
 ```
 go install
 ```
 
+### Download release binaries
+
+You can also download Linux and MacOS pre-built binaries from [releases section](https://github.com/charlysan/gidm/releases).
+
+### Docker Image
+
+Docker image is also available from [DockerHub](https://hub.docker.com/repository/docker/charlysan/gidm). You will find some examples in [Examples Section](#run-using-docker).
+
+
 ## Usage
 
-You can run the tool with `--help` option to get a list of supported commands:
+You can run the tool along with `--help` option to get a list of supported commands:
 
 ```bash
 $ ./gidm --help
@@ -48,7 +61,7 @@ GLOBAL OPTIONS:
 
 ### Inject Request Headers
 
-Listen on port `8081` and forward to `http://localhost:9000`; show debug information and inject the following headers:
+Listen on port `8081` and forward to `http://localhost:9000`, show debug information and inject the following headers:
 - `x-custom-flag: true`
 - `x-custom-id: 12345`
 
@@ -148,4 +161,25 @@ And the proxy should show the following log:
 ```
 Response Body string replacers updated
   ok -> WRONG!!
+```
+
+## Run using Docker
+
+Grab Docker image from [DockerHub](https://hub.docker.com/repository/docker/charlysan/gidm):
+
+```
+docker pull charlysan/gidm
+```
+
+Run and add the proper port-forwarding:
+
+```
+docker run \
+-p 8081:8080 \
+-p 9090:9090 \
+charlysan/gidm \
+-u https://api.chucknorris.io \
+-resb "/Chuck Norris/John Doe/" \
+-i 9090 \
+-d
 ```

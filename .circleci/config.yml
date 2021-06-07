@@ -1,0 +1,27 @@
+# .circleci/config.yml
+version: 2.1
+workflows:
+  main:
+    jobs:
+      - release:
+          # Only run this job on git tag pushes
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /v[0-9]+(\.[0-9]+)*(-.*)*/
+jobs:
+  release:
+    docker:
+      - image: circleci/golang:1.16
+    steps:
+      - checkout
+      - setup_remote_docker:
+          version: 19.03.13
+      - run: echo "$DOCKER_TOKEN" | docker login --username $DOCKER_USERNAME --password-stdin
+      # Generate binaries for Github
+      - run: curl -sL https://git.io/goreleaser | bash
+      # Generate Docker Image
+      - run: docker build -t charlysan/gidm:$CIRCLE_TAG .
+      - run: docker tag charlysan/gidm:$CIRCLE_TAG charlysan/gidm:latest
+      - run: docker push charlysan/gidm

@@ -1,0 +1,5 @@
+dockers:
+  - goarch: arm64
+  - goos: linux
+  - image_templates:
+    - charlysan/gidm
