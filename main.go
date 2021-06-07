@@ -19,6 +19,10 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+const (
+	version = "v0.2.1"
+)
+
 var reqHeadersSlice *cli.StringSlice
 var resHeadersSlice *cli.StringSlice
 var reqBodyStrSlice *cli.StringSlice
@@ -40,9 +44,16 @@ func main() {
 	reqBodyStrSlice = cli.NewStringSlice()
 	resBodyStrSlice = cli.NewStringSlice()
 
+	cli.VersionFlag = &cli.BoolFlag{
+		Name:    "version",
+		Aliases: []string{"v"},
+		Usage:   "print version",
+	}
+
 	app := &cli.App{
-		Name:  "gidm",
-		Usage: "Simple midm tool",
+		Name:    "gidm",
+		Version: version,
+		Usage:   "Simple midm tool",
 		Flags: []cli.Flag{
 			&cli.StringSliceFlag{
 				Name:        "reqh",

@@ -37,24 +37,28 @@ You can run the tool along with `--help` option to get a list of supported comma
 ```bash
 $ ./gidm --help
 NAME:
-   gidm - Simple http proxy midm tool
+   gidm - Simple midm tool
 
 USAGE:
    gidm [global options] command [command options] [arguments...]
+
+VERSION:
+   v0.2.1
 
 COMMANDS:
    help, h  Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
-   --reqh value  inject request header
-   --resh value  inject response header
-   --reqb value  replace string in request body (/old/new/)
-   --resb value  replace string in response body (/old/new/)
-   -p value      listen to port (default: "8080")
-   -u value      redirect to url (default: "http://localhost:9000")
-   -i value      enable interactive mode (API server will listen on specified port)
-   -d            enable debugging (default: false)
-   --help, -h    show help (default: false)
+   --reqh value   inject request header
+   --resh value   inject response header
+   --reqb value   replace string in request body (/old/new/)
+   --resb value   replace string in response body (/old/new/)
+   -p value       listen to port (default: "8080")
+   -u value       redirect to url (default: "http://localhost:9000")
+   -i value       enable interactive mode (API server will listen on specified port)
+   -d             enable debugging (default: false)
+   --help, -h     show help (default: false)
+   --version, -v  print version (default: false)
 ```
 
 ## Examples
@@ -76,7 +80,7 @@ gidm \
 ```
 
 POST something to `localhost:8081`:
-```
+```bash
 curl -X POST \
 http://localhost:8081/dummy \
 -H "content-type: application/json" \
@@ -84,13 +88,14 @@ http://localhost:8081/dummy \
 ```
 
 You should get this output:
-```
+```bash
 Listening on port: 8081
 Redirecting to: http://localhost:9000
 
 Request headers to be injected:
   x-custom-flag: true
   x-custom-id: 12345
+
 2021/05/31 18:34:16 POST /dummy HTTP/1.1
 Host: localhost:9000
 Accept: */*
@@ -101,6 +106,7 @@ X-Custom-Flag: true
 X-Custom-Id: 12345
 
 {"name": "john doe"}
+
 2021/05/31 18:34:16 HTTP/1.1 404 Not Found
 Content-Length: 22
 Content-Type: application/json
@@ -129,13 +135,13 @@ For example, to replace every `ok` with `BAD` in your response body, you can use
 
 Grab Docker image from [DockerHub](https://hub.docker.com/r/charlysan/gidm):
 
-```
+```bash
 docker pull charlysan/gidm
 ```
 
 Run and add the proper port-forwarding:
 
-```
+```bash
 docker run \
 -p 8081:8080 \
 -p 9090:9090 \
@@ -144,6 +150,22 @@ charlysan/gidm \
 -resb "/Chuck Norris/John Doe/" \
 -i 9090 \
 -d
+```
+
+```bash
+$ curl http://localhost:8081/jokes/random | json_pp
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   342  100   342    0     0    421      0 --:--:-- --:--:-- --:--:--   421
+{
+   "value" : "Most people have Microwave ovens. John Doe has a Megawave oven.",
+   "url" : "https://api.chucknorris.io/jokes/t-ipnAxeTFCpF6cLvN9_-Q",
+   "id" : "t-ipnAxeTFCpF6cLvN9_-Q",
+   "created_at" : "2020-01-05 13:42:23.880601",
+   "icon_url" : "https://assets.chucknorris.host/img/avatar/chuck-norris.png",
+   "categories" : [],
+   "updated_at" : "2020-01-05 13:42:23.880601"
+}
 ```
 
 ## Interactive Mode
