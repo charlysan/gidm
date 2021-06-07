@@ -27,7 +27,7 @@ You can also download Linux and MacOS pre-built binaries from [releases section]
 
 ### Docker Image
 
-Docker image is also available from [DockerHub](https://hub.docker.com/repository/docker/charlysan/gidm). You will find some examples in [Examples Section](#run-using-docker).
+Docker image is also available from [DockerHub](https://hub.docker.com/r/charlysan/gidm). You will find some use cases in section [Examples](#run-using-docker).
 
 
 ## Usage
@@ -125,6 +125,27 @@ For example, to replace every `ok` with `BAD` in your response body, you can use
 -d
 ```
 
+### Run using Docker
+
+Grab Docker image from [DockerHub](https://hub.docker.com/r/charlysan/gidm):
+
+```
+docker pull charlysan/gidm
+```
+
+Run and add the proper port-forwarding:
+
+```
+docker run \
+-p 8081:8080 \
+-p 9090:9090 \
+charlysan/gidm \
+-u https://api.chucknorris.io \
+-resb "/Chuck Norris/John Doe/" \
+-i 9090 \
+-d
+```
+
 ## Interactive Mode
 
 Interactive Mode allows to modify the proxy behavior without restarting the app. Te proxy will listen on the port specified using `-i <PORT>` flag:
@@ -161,25 +182,4 @@ And the proxy should show the following log:
 ```
 Response Body string replacers updated
   ok -> WRONG!!
-```
-
-## Run using Docker
-
-Grab Docker image from [DockerHub](https://hub.docker.com/repository/docker/charlysan/gidm):
-
-```
-docker pull charlysan/gidm
-```
-
-Run and add the proper port-forwarding:
-
-```
-docker run \
--p 8081:8080 \
--p 9090:9090 \
-charlysan/gidm \
--u https://api.chucknorris.io \
--resb "/Chuck Norris/John Doe/" \
--i 9090 \
--d
 ```
