@@ -27,6 +27,7 @@ var reqHeadersSlice *cli.StringSlice
 var resHeadersSlice *cli.StringSlice
 var reqBodyStrSlice *cli.StringSlice
 var resBodyStrSlice *cli.StringSlice
+var pathRedirectStrSlice *cli.StringSlice
 var port string
 var portInteractive string = ""
 var baseURL string
@@ -36,6 +37,7 @@ var reqHeaders map[string]string
 var resHeaders map[string]string
 var reqBodyStr map[string]string
 var resBodyStr map[string]string
+var pathRedirectStr map[string]string
 var redirectURI *url.URL
 
 func main() {
@@ -43,6 +45,7 @@ func main() {
 	resHeadersSlice = cli.NewStringSlice()
 	reqBodyStrSlice = cli.NewStringSlice()
 	resBodyStrSlice = cli.NewStringSlice()
+	pathRedirectStrSlice = cli.NewStringSlice()
 
 	cli.VersionFlag = &cli.BoolFlag{
 		Name:    "version",
@@ -74,6 +77,11 @@ func main() {
 				Name:        "resb",
 				Usage:       "replace string in response body (/old/new/)",
 				Destination: resBodyStrSlice,
+			},
+			&cli.StringSliceFlag{
+				Name:        "pathr",
+				Usage:       "redirect path to host (/matched-path-regex/redirect-to-host/)",
+				Destination: pathRedirectStrSlice,
 			},
 			&cli.StringFlag{
 				Name:        "p",
@@ -111,7 +119,29 @@ func main() {
 }
 
 func handleRequestAndRedirect(res http.ResponseWriter, req *http.Request) {
-	proxy := httputil.NewSingleHostReverseProxy(redirectURI)
+	// Modify redirect based on URL
+	host := redirectURI
+	if len(pathRedirectStr) > 0 {
+		for pathRegex, hostToRedirect := range pathRedirectStr {
+			matched, err := regexp.MatchString(pathRegex, req.URL.Path)
+			if err != nil {
+				log.Fatal("Invalid regex: " + pathRegex)
+				continue
+			}
+
+			if matched {
+				uri, err := url.Parse(hostToRedirect)
+				if err != nil {
+					fmt.Println("Wrong URL format in redirect", err.Error())
+					continue
+				}
+				host = uri
+				break
+			}
+		}
+	}
+
+	proxy := httputil.NewSingleHostReverseProxy(host)
 
 	// Inject headers
 	for key, value := range reqHeaders {
@@ -137,7 +167,7 @@ func handleRequestAndRedirect(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// httputil.NewSingleHostReverseProxy does not set the host of the request to the host of the destination server.
-	req.Host = redirectURI.Host
+	req.Host = host.Host
 	proxy.Transport = &myTransport{}
 
 	if debug {
@@ -238,20 +268,34 @@ func run(c *cli.Context) error {
 			}
 		}
 	}
+
+	// Parse URL replacer Strings
+	if len(pathRedirectStrSlice.Value()) > 0 {
+		pathRedirectStr = parseStringReplacers(pathRedirectStrSlice)
+		if len(pathRedirectStr) > 0 {
+			fmt.Println("\npaths to be redirected:")
+			for path, host := range pathRedirectStr {
+				fmt.Println(" ", path+" -> "+host)
+			}
+		}
+	}
+
 	if len(portInteractive) > 0 {
 		fmt.Println("\nInteractive mode enabled: listening on port", portInteractive)
 		handler := api.CustomHandler{
-			Router:     mux.NewRouter(),
-			ReqHeaders: &reqHeaders,
-			ResHeaders: &resHeaders,
-			ReqBodyStr: &reqBodyStr,
-			ResBodyStr: &resBodyStr,
+			Router:          mux.NewRouter(),
+			ReqHeaders:      &reqHeaders,
+			ResHeaders:      &resHeaders,
+			ReqBodyStr:      &reqBodyStr,
+			ResBodyStr:      &resBodyStr,
+			PathRedirectStr: &pathRedirectStr,
 		}
 
 		handler.Router.HandleFunc("/requestHeaders", handler.HandleRequestHeaders).Methods("PUT")
 		handler.Router.HandleFunc("/responseHeaders", handler.HandleResponseHeaders).Methods("PUT")
 		handler.Router.HandleFunc("/requestBodyReplacers", handler.HandleRequestBodyStr).Methods("PUT")
 		handler.Router.HandleFunc("/responseBodyReplacers", handler.HandleResponseBodyStr).Methods("PUT")
+		handler.Router.HandleFunc("/redirectedPaths", handler.HandlePathRedirect).Methods("PUT")
 
 		go func() {
 			log.Fatal(http.ListenAndServe(":"+portInteractive, handler.Router))

@@ -9,12 +9,13 @@ import (
 )
 
 type CustomHandler struct {
-	h          http.Handler
-	Router     *mux.Router
-	ReqHeaders *map[string]string
-	ResHeaders *map[string]string
-	ReqBodyStr *map[string]string
-	ResBodyStr *map[string]string
+	h               http.Handler
+	Router          *mux.Router
+	ReqHeaders      *map[string]string
+	ResHeaders      *map[string]string
+	ReqBodyStr      *map[string]string
+	ResBodyStr      *map[string]string
+	PathRedirectStr *map[string]string
 }
 
 func (h *CustomHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -49,6 +50,14 @@ func (h *CustomHandler) HandleResponseBodyStr(res http.ResponseWriter, req *http
 	handleRequest(h.ResBodyStr, res, req)
 	fmt.Println("Response Body string replacers updated")
 	for key, value := range *h.ResBodyStr {
+		fmt.Println(" ", key+" -> "+value)
+	}
+}
+
+func (h *CustomHandler) HandlePathRedirect(res http.ResponseWriter, req *http.Request) {
+	handleRequest(h.ResBodyStr, res, req)
+	fmt.Println("Redirected Paths updated")
+	for key, value := range *h.PathRedirectStr {
 		fmt.Println(" ", key+" -> "+value)
 	}
 }
