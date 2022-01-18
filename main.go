@@ -12,6 +12,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/charlysan/gidm/api"
 
@@ -31,6 +32,7 @@ var pathRedirectStrSlice *cli.StringSlice
 var port string
 var portInteractive string = ""
 var baseURL string
+var delay int = 0
 var debug bool = false
 
 var reqHeaders map[string]string
@@ -101,6 +103,12 @@ func main() {
 				Required:    true,
 				Destination: &portInteractive,
 			},
+			&cli.IntFlag{
+				Name:        "delay",
+				Usage:       "adds delay in seconds",
+				Required:    false,
+				Destination: &delay,
+			},
 			&cli.BoolFlag{
 				Name:        "d",
 				Usage:       "enable debugging",
@@ -119,6 +127,10 @@ func main() {
 }
 
 func handleRequestAndRedirect(res http.ResponseWriter, req *http.Request) {
+	if delay > 0 {
+		time.Sleep(time.Duration(delay) * time.Second)
+	}
+
 	// Modify redirect based on URL
 	host := redirectURI
 	if len(pathRedirectStr) > 0 {
